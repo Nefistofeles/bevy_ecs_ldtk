@@ -300,7 +300,7 @@ pub trait LdtkEntity {
         tileset: Option<&Handle<Image>>,
         tileset_definition: Option<&TilesetDefinition>,
         asset_server: &AssetServer,
-        texture_atlases: &mut Assets<TextureAtlas>,
+        texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
     ) -> Self;
 }
 
@@ -311,7 +311,7 @@ impl LdtkEntity for EntityInstanceBundle {
         _: Option<&Handle<Image>>,
         _: Option<&TilesetDefinition>,
         _: &AssetServer,
-        _: &mut Assets<TextureAtlas>,
+        _: &mut Assets<TextureAtlasLayout>,
     ) -> Self {
         EntityInstanceBundle {
             entity_instance: entity_instance.clone(),
@@ -326,7 +326,7 @@ impl LdtkEntity for SpriteBundle {
         tileset: Option<&Handle<Image>>,
         _: Option<&TilesetDefinition>,
         _: &AssetServer,
-        _: &mut Assets<TextureAtlas>,
+        _: &mut Assets<TextureAtlasLayout>,
     ) -> Self {
         utils::sprite_bundle_from_entity_info(tileset)
     }
@@ -339,7 +339,7 @@ impl LdtkEntity for SpriteSheetBundle {
         tileset: Option<&Handle<Image>>,
         tileset_definition: Option<&TilesetDefinition>,
         _: &AssetServer,
-        texture_atlases: &mut Assets<TextureAtlas>,
+        texture_atlases: &mut Assets<TextureAtlasLayout>,
     ) -> Self {
         utils::sprite_sheet_bundle_from_entity_info(
             entity_instance,
@@ -358,7 +358,7 @@ impl LdtkEntity for Worldly {
         _: Option<&Handle<Image>>,
         _: Option<&TilesetDefinition>,
         _: &AssetServer,
-        _: &mut Assets<TextureAtlas>,
+        _: &mut Assets<TextureAtlasLayout>,
     ) -> Worldly {
         Worldly::from_entity_info(entity_instance)
     }
@@ -371,7 +371,7 @@ impl LdtkEntity for GridCoords {
         _: Option<&Handle<Image>>,
         _: Option<&TilesetDefinition>,
         _: &AssetServer,
-        _: &mut Assets<TextureAtlas>,
+        _: &mut Assets<TextureAtlasLayout>,
     ) -> Self {
         GridCoords::from_entity_info(entity_instance, layer_instance)
     }
@@ -392,29 +392,29 @@ impl<B: LdtkEntity + Bundle> PhantomLdtkEntity<B> {
 
 pub trait PhantomLdtkEntityTrait {
     #[allow(clippy::too_many_arguments)]
-    fn evaluate<'w, 's, 'a, 'b>(
+    fn evaluate<'a, 'b>(
         &self,
-        commands: &'b mut EntityCommands<'w, 's, 'a>,
+        commands: &'b mut EntityCommands<'a>,
         entity_instance: &EntityInstance,
         layer_instance: &LayerInstance,
         tileset: Option<&Handle<Image>>,
         tileset_definition: Option<&TilesetDefinition>,
         asset_server: &AssetServer,
-        texture_atlases: &mut Assets<TextureAtlas>,
-    ) -> &'b mut EntityCommands<'w, 's, 'a>;
+        texture_atlases: &mut Assets<TextureAtlasLayout>,
+    ) -> &'b mut EntityCommands<'a>;
 }
 
 impl<B: LdtkEntity + Bundle> PhantomLdtkEntityTrait for PhantomLdtkEntity<B> {
-    fn evaluate<'w, 's, 'a, 'b>(
+    fn evaluate<'a, 'b>(
         &self,
-        entity_commands: &'b mut EntityCommands<'w, 's, 'a>,
+        entity_commands: &'b mut EntityCommands<'a>,
         entity_instance: &EntityInstance,
         layer_instance: &LayerInstance,
         tileset: Option<&Handle<Image>>,
         tileset_definition: Option<&TilesetDefinition>,
         asset_server: &AssetServer,
-        texture_atlases: &mut Assets<TextureAtlas>,
-    ) -> &'b mut EntityCommands<'w, 's, 'a> {
+        texture_atlases: &mut Assets<TextureAtlasLayout>,
+    ) -> &'b mut EntityCommands<'a> {
         entity_commands.insert(B::bundle_entity(
             entity_instance,
             layer_instance,

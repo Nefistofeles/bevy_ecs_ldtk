@@ -40,7 +40,7 @@ enum BackgroundImageError {
 
 fn background_image_sprite_sheet_bundle(
     images: &Assets<Image>,
-    texture_atlases: &mut Assets<TextureAtlas>,
+    texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
     background_image_handle: &Handle<Image>,
     background_position: &LevelBackgroundPosition,
     level_height: i32,
@@ -52,25 +52,28 @@ fn background_image_sprite_sheet_bundle(
             background_image.texture_descriptor.size.width as f32,
             background_image.texture_descriptor.size.height as f32,
         );
-        let mut texture_atlas = TextureAtlas::new_empty(background_image_handle.clone(), tile_size);
-
+        
         let min = Vec2::new(
             background_position.crop_rect[0],
             background_position.crop_rect[1],
         );
-
+        
         let size = Vec2::new(
             background_position.crop_rect[2],
             background_position.crop_rect[3],
         );
-
+        
         let max = min + size;
-
+        
         let crop_rect = Rect { min, max };
-
-        texture_atlas.textures.push(crop_rect);
-
-        let texture_atlas_handle = texture_atlases.add(texture_atlas);
+        
+        let mut texture_atlas_layout = TextureAtlasLayout::new_empty(tile_size);
+        texture_atlas_layout.textures.push(crop_rect);
+        let texture_atlas_layout_handle = texture_atlas_layouts.add(texture_atlas_layout);
+        let texture_atlas = TextureAtlas {
+            index: 0,
+            layout: texture_atlas_layout_handle
+        };
 
         let scale = background_position.scale;
 
@@ -83,9 +86,10 @@ fn background_image_sprite_sheet_bundle(
             top_left_translation + (Vec2::new(scaled_size.x, -scaled_size.y) / 2.);
 
         Ok(SpriteSheetBundle {
-            texture_atlas: texture_atlas_handle,
+            atlas: texture_atlas,
             transform: Transform::from_translation(center_translation.extend(transform_z))
                 .with_scale(scale.extend(1.)),
+            texture: background_image_handle.clone(),
             ..Default::default()
         })
     } else {
@@ -210,7 +214,7 @@ pub fn spawn_level(
     commands: &mut Commands,
     asset_server: &AssetServer,
     images: &Assets<Image>,
-    texture_atlases: &mut Assets<TextureAtlas>,
+    texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
     ldtk_entity_map: &LdtkEntityMap,
     ldtk_int_cell_map: &LdtkIntCellMap,
     entity_definition_map: &HashMap<i32, &EntityDefinition>,
@@ -251,7 +255,7 @@ pub fn spawn_level(
         {
             match background_image_sprite_sheet_bundle(
                 images,
-                texture_atlases,
+                texture_atlas_layouts,
                 background_image_handle,
                 background_position,
                 *level.px_hei(),
@@ -316,7 +320,7 @@ pub fn spawn_level(
                                 tileset,
                                 tileset_definition,
                                 asset_server,
-                                texture_atlases,
+                                texture_atlas_layouts,
                             );
 
                             if !worldly_set.contains(&predicted_worldly) {
@@ -344,7 +348,7 @@ pub fn spawn_level(
                                     tileset,
                                     tileset_definition,
                                     asset_server,
-                                    texture_atlases,
+                                    texture_atlas_layouts,
                                 );
 
                                 entity_commands.insert(SpatialBundle {

@@ -115,7 +115,7 @@ pub fn expand_ldtk_entity_derive(ast: syn::DeriveInput) -> proc_macro::TokenStre
                 tileset: Option<&bevy::prelude::Handle<bevy::prelude::Image>>,
                 tileset_definition: Option<&bevy_ecs_ldtk::prelude::TilesetDefinition>,
                 asset_server: &bevy::prelude::AssetServer,
-                texture_atlases: &mut bevy::prelude::Assets<bevy::prelude::TextureAtlas>,
+                texture_atlas_layouts: &mut bevy::prelude::Assets<bevy::prelude::TextureAtlasLayout>,
             ) -> Self {
                 Self {
                     #(#field_constructions)*
@@ -231,18 +231,17 @@ fn expand_sprite_sheet_bundle_attribute(
 
             quote! {
                 #field_name: bevy::prelude::SpriteSheetBundle {
-                    texture_atlas: texture_atlases.add(
-                        bevy::prelude::TextureAtlas::from_grid(
-                            asset_server.load(#asset_path).into(),
-                            bevy::prelude::Vec2::new(#tile_width, #tile_height),
-                            #columns, #rows, Some(bevy::prelude::Vec2::splat(#padding)),
-                            Some(bevy::prelude::Vec2::splat(#offset)),
-                        )
-                    ),
-                    sprite: bevy::prelude::TextureAtlasSprite {
+                    atlas: TextureAtlas{
                         index: #index,
-                        ..Default::default()
+                        layout: texture_atlas_layouts.add(
+                            bevy::prelude::TextureAtlasLayout::from_grid(
+                                bevy::prelude::Vec2::new(#tile_width, #tile_height),
+                                #columns, #rows, Some(bevy::prelude::Vec2::splat(#padding)),
+                                Some(bevy::prelude::Vec2::splat(#offset)),
+                            )
+                        )
                     },
+                    texture: asset_server.load(#asset_path).into(),
                     ..Default::default()
                 },
             }
@@ -256,12 +255,12 @@ fn expand_sprite_sheet_bundle_attribute(
             };
 
             quote! {
-                #field_name: bevy_ecs_ldtk::utils::sprite_sheet_bundle_from_entity_info(entity_instance, tileset, tileset_definition, texture_atlases, false),
+                #field_name: bevy_ecs_ldtk::utils::sprite_sheet_bundle_from_entity_info(entity_instance, tileset, tileset_definition, texture_atlas_layouts, false),
             }
         },
         syn::Meta::Path(_) => {
             quote! {
-                #field_name: bevy_ecs_ldtk::utils::sprite_sheet_bundle_from_entity_info(entity_instance, tileset, tileset_definition, texture_atlases, true),
+                #field_name: bevy_ecs_ldtk::utils::sprite_sheet_bundle_from_entity_info(entity_instance, tileset, tileset_definition, texture_atlas_layouts, true),
             }
         },
         _ => panic!("#[sprite_sheet_bundle...] attribute should take the form #[sprite_sheet_bundle(\"asset/path.png\", tile_width, tile_height, columns, rows, padding, offset, index)], #[sprite_sheet_bundle(no_grid)] or #[sprite_sheet_bundle]"),
@@ -315,7 +314,7 @@ fn expand_ldtk_entity_attribute(
     {
         syn::Meta::Path(_) => {
             quote! {
-                #field_name: <#field_type as bevy_ecs_ldtk::prelude::LdtkEntity>::bundle_entity(entity_instance, layer_instance, tileset, tileset_definition, asset_server, texture_atlases),
+                #field_name: <#field_type as bevy_ecs_ldtk::prelude::LdtkEntity>::bundle_entity(entity_instance, layer_instance, tileset, tileset_definition, asset_server, texture_atlas_layouts),
             }
         }
         _ => panic!("#[ldtk_entity] attribute should take the form #[ldtk_entity]"),

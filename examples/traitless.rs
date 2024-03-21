@@ -32,7 +32,7 @@ struct ComponentB;
 fn process_my_entity(
     mut commands: Commands,
     entity_query: Query<(Entity, &Transform, &EntityInstance), Added<EntityInstance>>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
 ) {
     for (entity, transform, entity_instance) in entity_query.iter() {
@@ -40,8 +40,7 @@ fn process_my_entity(
             let tileset = asset_server.load("atlas/MV Icons Complete Sheet Free - ALL.png");
 
             if let Some(tile) = &entity_instance.tile {
-                let texture_atlas = texture_atlases.add(TextureAtlas::from_grid(
-                    tileset.clone(),
+                let texture_atlas_layout_handle = texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
                     Vec2::new(tile.w as f32, tile.h as f32),
                     16,
                     95,
@@ -49,14 +48,15 @@ fn process_my_entity(
                     None,
                 ));
 
-                let sprite = TextureAtlasSprite {
+                let texture_atlas = TextureAtlas {
                     index: (tile.y / tile.h) as usize * 16 + (tile.x / tile.w) as usize,
+                    layout: texture_atlas_layout_handle,
                     ..Default::default()
                 };
 
                 commands.entity(entity).insert(SpriteSheetBundle {
-                    texture_atlas,
-                    sprite,
+                    atlas: texture_atlas,
+                    texture: tileset.clone(),
                     transform: *transform,
                     ..Default::default()
                 });
